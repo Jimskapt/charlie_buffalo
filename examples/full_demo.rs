@@ -1,5 +1,4 @@
 use charlie_buffalo as cb;
-use charlie_buffalo::ValueAsString; // used in impl std::cmp::PartialEq<Level> for &String
 
 #[derive(serde::Serialize)]
 enum Level {
@@ -27,7 +26,13 @@ impl cb::ValueAsString for Level {
 
 impl std::cmp::PartialEq<Level> for &String {
 	fn eq(&self, other: &Level) -> bool {
-		*self == &other.as_string()
+		*self == &charlie_buffalo::ValueAsString::as_string(other)
+	}
+}
+
+impl std::convert::Into<cb::AttributeAsString> for Level {
+	fn into(self) -> cb::AttributeAsString {
+		return (String::from("level"), cb::ValueAsString::as_string(&self));
 	}
 }
 
@@ -55,20 +60,27 @@ fn dispatcher(log: cb::Log) {
 		}
 	}
 
-	let mut result: Vec<cb::Log> = if std::path::PathBuf::from(LOG_FILE_PATH).exists() {
-		rmp_serde::decode::from_read(std::fs::File::open(LOG_FILE_PATH).unwrap())
-			.unwrap_or_default()
-	} else {
-		vec![]
-	};
+	let mut result: Vec<cb::Log> =
+		rmp_serde::decode::from_slice(std::fs::read(LOG_FILE_PATH).unwrap_or_default().as_slice())
+			.unwrap_or_default();
 	result.push(new_log);
-	std::fs::write(LOG_FILE_PATH, rmp_serde::encode::to_vec(&result).unwrap()).unwrap();
+	std::fs::write(LOG_FILE_PATH, rmp_serde::encode::to_vec(&result).unwrap()).ok();
 }
 
 fn main() {
 	std::fs::write(LOG_FILE_PATH, "").unwrap();
 
-	let logger = cb::Logger::new(Box::new(dispatcher));
+	let logger = cb::Logger::new(
+		Box::new(dispatcher),
+		Some(Box::new(|logger: &cb::Logger| {
+			logger.push(vec![cb::Flag::from("STOP").into()], None);
+
+			println!(
+				"(please also read file {} to see written logs)\n",
+				LOG_FILE_PATH
+			);
+		})),
+	);
 
 	/* TODO
 	std::panic::set_hook(Box::new(|infos| {
@@ -90,34 +102,35 @@ fn main() {
 	}));
 	*/
 
+	logger.push(vec![cb::Flag::from("STARTUP").into()], None);
 	logger.push(
 		vec![
-			cb::Attr::from("level", Level::DEBUG).into(),
+			Level::DEBUG.into(),
 			cb::Attr::from("code", format!("{}:{}", file!(), line!())).into(),
 			cb::Attr::from("functionality", "I'm \"quoting\" for tests ...").into(),
 		],
-		"logger created",
+		Some("logger created"),
 	);
 	logger.push(
 		vec![
-			cb::Attr::from("level", Level::INFO).into(),
+			Level::INFO.into(),
 			cb::Attr::from("user_id", &(48625 as usize)).into(),
 			cb::Attr::from("code", format!("{}:{}", file!(), line!())).into(),
 		],
-		"user has log-in",
+		Some("user has log-in"),
 	);
 	logger.push(
 		vec![
-			cb::Attr::from("level", Level::WARN).into(),
+			Level::WARN.into(),
 			cb::Attr::from("logged", true).into(),
 			cb::Attr::from("code", format!("{}:{}", file!(), line!())).into(),
 			cb::Attr::from("credential_level", 'D').into(),
 		],
-		"token cookie is not readable",
+		Some("token cookie is not readable"),
 	);
 	logger.push(
 		vec![
-			cb::Attr::from("level", Level::ERROR).into(),
+			Level::ERROR.into(),
 			cb::Attr::from("HTTP-code", &(404 as u16)).into(),
 			cb::Attr::from("route", "/users/16472/friends").into(),
 			cb::Attr::from("code", format!("{}:{}", file!(), line!())).into(),
@@ -127,10 +140,8 @@ fn main() {
 			)
 			.into(),
 		],
-		"this is first ERROR",
+		Some("this is first ERROR"),
 	);
-
-	println!("\t\t(see also created file {})", LOG_FILE_PATH);
 
 	let result: Vec<cb::Log> =
 		rmp_serde::decode::from_read(std::fs::File::open(LOG_FILE_PATH).unwrap())
