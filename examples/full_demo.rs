@@ -1,4 +1,5 @@
 use charlie_buffalo as cb;
+use std::sync::{Arc, Mutex};
 
 #[derive(serde::Serialize)]
 enum Level {
@@ -71,39 +72,66 @@ fn main() {
 	std::fs::write(LOG_FILE_PATH, "").unwrap();
 
 	let logger = cb::Logger::new(
-		Box::new(dispatcher),
-		Some(Box::new(|logger: &cb::Logger| {
+		Arc::from(Mutex::from(dispatcher)),
+		Some(Arc::from(Mutex::from(|logger: &cb::Logger| {
 			logger.push(vec![cb::Flag::from("STOP").into()], None);
 
+			let result: Vec<cb::Log> =
+				rmp_serde::decode::from_read(std::fs::File::open(LOG_FILE_PATH).unwrap())
+					.unwrap_or_default();
+			std::fs::write(
+				"logs.converted.json",
+				serde_json::ser::to_vec_pretty(&result).unwrap(),
+			)
+			.unwrap();
+
 			println!(
-				"(please also read file {} to see written logs)\n",
+				"(please also read file {} and logs.converted.json to see written logs)\n",
 				LOG_FILE_PATH
 			);
-		})),
+		}))),
 	);
 
-	/* TODO
-	std::panic::set_hook(Box::new(|infos| {
-		match infos.location() {
-			Some(location) => {
-				logger.push(vec![
-					cb::Attr::from("level", Level::PANIC).into(),
-					cb::Attr::from("code", format!("{}:{}", location.file(), location.line())).into(),
-				],
-				"panic");
-			},
-			None => {
-				logger.push(vec![
-					cb::Attr::from("level", Level::PANIC).into(),
-				],
-				"panic");
-			}
-		}
-	}));
-	*/
+	let logger_for_panic = logger.clone();
+	std::panic::set_hook(Box::new(move |infos| {
+		let attributes = match infos.location() {
+			Some(location) => vec![
+				Level::PANIC.into(),
+				cb::Flag::from("STOP").into(),
+				cb::Attr::from("code", format!("{}:{}", location.file(), location.line())).into(),
+			],
+			None => vec![Level::PANIC.into()],
+		};
 
-	logger.push(vec![cb::Flag::from("STARTUP").into()], None);
-	logger.push(
+		logger_for_panic.lock().unwrap().push(
+			attributes,
+			Some(&format!(
+				"{:?}",
+				infos.payload().downcast_ref::<&str>().unwrap_or(&"")
+			)),
+		);
+
+		// TODO : following is duplicate
+		let result: Vec<cb::Log> =
+			rmp_serde::decode::from_read(std::fs::File::open(LOG_FILE_PATH).unwrap())
+				.unwrap_or_default();
+		std::fs::write(
+			"logs.converted.json",
+			serde_json::ser::to_vec_pretty(&result).unwrap(),
+		)
+		.unwrap();
+
+		println!(
+			"(please also read file {} and logs.converted.json to see written logs)\n",
+			LOG_FILE_PATH
+		);
+	}));
+
+	logger
+		.lock()
+		.unwrap()
+		.push(vec![cb::Flag::from("STARTUP").into()], None);
+	logger.lock().unwrap().push(
 		vec![
 			Level::DEBUG.into(),
 			cb::Attr::from("code", format!("{}:{}", file!(), line!())).into(),
@@ -111,7 +139,7 @@ fn main() {
 		],
 		Some("logger created"),
 	);
-	logger.push(
+	logger.lock().unwrap().push(
 		vec![
 			Level::INFO.into(),
 			cb::Attr::from("user_id", &(48625 as usize)).into(),
@@ -119,7 +147,7 @@ fn main() {
 		],
 		Some("user has log-in"),
 	);
-	logger.push(
+	logger.lock().unwrap().push(
 		vec![
 			Level::WARN.into(),
 			cb::Attr::from("logged", true).into(),
@@ -128,7 +156,7 @@ fn main() {
 		],
 		Some("token cookie is not readable"),
 	);
-	logger.push(
+	logger.lock().unwrap().push(
 		vec![
 			Level::ERROR.into(),
 			cb::Attr::from("HTTP-code", &(404 as u16)).into(),
@@ -143,18 +171,7 @@ fn main() {
 		Some("this is first ERROR"),
 	);
 
-	let result: Vec<cb::Log> =
-		rmp_serde::decode::from_read(std::fs::File::open(LOG_FILE_PATH).unwrap())
-			.unwrap_or_default();
-	std::fs::write(
-		"logs.converted.json",
-		serde_json::ser::to_vec_pretty(&result).unwrap(),
-	)
-	.unwrap();
-
-	println!();
-
-	/* TODO
 	panic!("Here we voluntary finishing this example with this panic, which will be also logged !");
-	*/
+
+	let _ = std::panic::take_hook(); // needed for Drop on Arc<Mutex<Logger>>
 }
