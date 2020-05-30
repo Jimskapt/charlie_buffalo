@@ -33,29 +33,25 @@ impl std::cmp::PartialEq<Level> for &String {
 
 const LOG_FILE_PATH: &str = "logs.msgpack";
 
-fn hook(log: cb::Log) -> Option<cb::Log> {
-	let mut result = log.clone();
+fn dispatcher(log: cb::Log) {
+	let mut new_log = log.clone();
 
 	let attributes: Vec<cb::AttributeAsString> =
 		vec![cb::Attr::from("time", format!("{}", chrono::offset::Local::now())).into()];
 	for attribute in attributes {
-		result.attributes.insert(attribute.0, attribute.1);
+		new_log.attributes.insert(attribute.0, attribute.1);
 	}
 
-	return Some(result);
-}
-
-fn dispatcher(log: cb::Log) {
-	match log.attributes.get("level") {
+	match new_log.attributes.get("level") {
 		Some(level) => {
 			if level == Level::PANIC || level == Level::ERROR {
-				eprintln!("{}", &log);
+				eprintln!("{}", &new_log);
 			} else {
-				println!("{}", &log);
+				println!("{}", &new_log);
 			}
 		}
 		_ => {
-			println!("{}", &log);
+			println!("{}", &new_log);
 		}
 	}
 
@@ -65,14 +61,14 @@ fn dispatcher(log: cb::Log) {
 	} else {
 		vec![]
 	};
-	result.push(log);
+	result.push(new_log);
 	std::fs::write(LOG_FILE_PATH, rmp_serde::encode::to_vec(&result).unwrap()).unwrap();
 }
 
 fn main() {
 	std::fs::write(LOG_FILE_PATH, "").unwrap();
 
-	let logger = cb::Logger::new(Some(Box::new(hook)), Box::new(dispatcher));
+	let logger = cb::Logger::new(Box::new(dispatcher));
 
 	/* TODO
 	std::panic::set_hook(Box::new(|infos| {
