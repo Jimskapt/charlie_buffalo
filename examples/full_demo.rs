@@ -71,7 +71,7 @@ fn dispatcher(log: cb::Log) {
 fn main() {
 	std::fs::write(LOG_FILE_PATH, "").unwrap();
 
-	let logger = cb::Logger::new(
+	let logger = cb::concurrent_logger_from(cb::Logger::new(
 		Arc::from(Mutex::from(dispatcher)),
 		Some(Arc::from(Mutex::from(|logger: &cb::Logger| {
 			logger.push(vec![cb::Flag::from("STOP").into()], None);
@@ -90,7 +90,7 @@ fn main() {
 				LOG_FILE_PATH
 			);
 		}))),
-	);
+	));
 
 	let logger_for_panic = logger.clone();
 	std::panic::set_hook(Box::new(move |infos| {
@@ -103,7 +103,8 @@ fn main() {
 			None => vec![Level::PANIC.into()],
 		};
 
-		logger_for_panic.lock().unwrap().push(
+		cb::push(
+			&logger_for_panic,
 			attributes,
 			Some(&format!(
 				"{:?}",
@@ -131,7 +132,8 @@ fn main() {
 		.lock()
 		.unwrap()
 		.push(vec![cb::Flag::from("STARTUP").into()], None);
-	logger.lock().unwrap().push(
+	cb::push(
+		&logger,
 		vec![
 			Level::DEBUG.into(),
 			cb::Attr::from("code", format!("{}:{}", file!(), line!())).into(),
@@ -139,7 +141,8 @@ fn main() {
 		],
 		Some("logger created"),
 	);
-	logger.lock().unwrap().push(
+	cb::push(
+		&logger,
 		vec![
 			Level::INFO.into(),
 			cb::Attr::from("user_id", &(48625 as usize)).into(),
@@ -147,7 +150,8 @@ fn main() {
 		],
 		Some("user has log-in"),
 	);
-	logger.lock().unwrap().push(
+	cb::push(
+		&logger,
 		vec![
 			Level::WARN.into(),
 			cb::Attr::from("logged", true).into(),
@@ -156,7 +160,8 @@ fn main() {
 		],
 		Some("token cookie is not readable"),
 	);
-	logger.lock().unwrap().push(
+	cb::push(
+		&logger,
 		vec![
 			Level::ERROR.into(),
 			cb::Attr::from("HTTP-code", &(404 as u16)).into(),

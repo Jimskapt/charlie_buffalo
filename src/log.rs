@@ -4,6 +4,25 @@ pub struct Log {
 	pub content: Option<String>,
 }
 
+impl std::convert::From<(Vec<crate::AttributeAsString>, Option<&str>)> for Log {
+	fn from(input: (Vec<crate::AttributeAsString>, Option<&str>)) -> Self {
+		let (attributes, content) = input;
+		
+		let mut temp = std::collections::BTreeMap::new();
+		for attribute in attributes {
+			temp.insert(attribute.0, attribute.1);
+		}
+
+		Log {
+			attributes: temp,
+			content: match content {
+				Some(content) => Some(String::from(content)),
+				None => None,
+			},
+		}
+	}
+}
+
 impl std::fmt::Display for Log {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		write!(f, "-> ").unwrap();
