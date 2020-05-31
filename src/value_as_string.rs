@@ -1,3 +1,25 @@
+/// This current value could be simplified as String.
+///
+/// It is needed to write this value in external system (like log file which
+/// will be read by another program, or web API), and this external system
+/// probably not know this type value.
+///
+/// It is like serializing this value, but without that the external system can
+/// deserialize it. So the value should be simplified as String, to be generic.
+///
+/// Numerical values (like `i32`, `f32`, or `bool`) will be casted in String,
+/// but external system should be able to detect them and cast them in its own
+/// numerical system (if any).
+///
+/// # Example
+///
+/// See an example of implementation of `ValueAsString` on `enum Level` in
+/// [/examples/full_demo.rs](https://github.com/Jimskapt/charlie_buffalo/blob/master/examples/full_demo.rs)
+/// in source repository.
+///
+/// # See also
+///
+/// [`Attribute`](struct.Attribute.html)
 pub trait ValueAsString {
 	fn as_string(&self) -> String;
 }

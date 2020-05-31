@@ -1,13 +1,20 @@
+/// An unique log.
+///
+/// It has `attributes` which can be easily constructed by
+/// [`Vec<Attribute>`](struct.Attribute.html).
+/// 
+/// Its `content` is optional, in case of all important data is already in
+/// `attributes`.
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct Log {
 	pub attributes: std::collections::BTreeMap<String, String>,
 	pub content: Option<String>,
 }
 
-impl std::convert::From<(Vec<crate::AttributeAsString>, Option<&str>)> for Log {
-	fn from(input: (Vec<crate::AttributeAsString>, Option<&str>)) -> Self {
+impl std::convert::From<(Vec<(String, String)>, Option<&str>)> for Log {
+	fn from(input: (Vec<(String, String)>, Option<&str>)) -> Self {
 		let (attributes, content) = input;
-		
+
 		let mut temp = std::collections::BTreeMap::new();
 		for attribute in attributes {
 			temp.insert(attribute.0, attribute.1);
