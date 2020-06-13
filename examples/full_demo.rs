@@ -1,11 +1,8 @@
-// following line is optional, it is useful only to fetch crate
-// in https://play.rust-lang.org/ when copying/pasting this code.
-extern crate charlie_buffalo;
-
 use charlie_buffalo as cb;
 
 const LOG_FILE_PATH: &str = "logs.msgpack";
 
+#[allow(unreachable_code)]
 fn main() {
 	std::fs::write(LOG_FILE_PATH, "").unwrap();
 
