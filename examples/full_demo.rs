@@ -105,7 +105,7 @@ fn main() {
 
 	/*
 	following line needed to run Drop on Arc<Mutex<Logger>
-	(otherwise the hard counter stays to 1 at the end of main do drop() is not run)
+	(otherwise the hard counter stays to 1 at the end of main so drop() is not run)
 	*/
 
 	let _ = std::panic::take_hook();

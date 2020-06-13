@@ -1,10 +1,11 @@
 [package]
 name = "charlie_buffalo"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Jimskapt <rami.programmer@gmail.com>"]
 description = "A library to join attributes on system logs."
 edition = "2018"
 license = "MIT"
+readme = "README.md"
 repository = "https://github.com/Jimskapt/charlie_buffalo"
 keywords = ["log", "logger", "logging", "attributes", "concurrent"]
 categories = ["development-tools::debugging"]

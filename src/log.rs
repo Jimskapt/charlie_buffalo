@@ -2,7 +2,7 @@
 ///
 /// It has `attributes` which can be easily constructed by
 /// [`Vec<Attribute>`](struct.Attribute.html).
-/// 
+///
 /// Its `content` is optional, in case of all important data is already in
 /// `attributes`.
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
@@ -32,15 +32,19 @@ impl std::convert::From<(Vec<(String, String)>, Option<&str>)> for Log {
 
 impl std::fmt::Display for Log {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		write!(f, "-> ").unwrap();
+		write!(f, "-> ")?;
 		if let Some(content) = &self.content {
-			writeln!(f, "{}", &content).unwrap();
+			writeln!(f, "{}", &content)?;
 		} else {
-			writeln!(f).unwrap();
+			writeln!(f)?;
 		}
 
 		for (key, value) in &self.attributes {
-			writeln!(f, "\t{} : {}", &key, &value).unwrap();
+			if value != "" {
+				writeln!(f, "\t\"{}\" : {}", &key, &value)?;
+			} else {
+				writeln!(f, "\t> {}", &key)?;
+			}
 		}
 
 		Ok(())

@@ -16,18 +16,18 @@ use std::sync::{Arc, Mutex};
 ///
 /// ```rust
 /// let dispatcher: charlie_buffalo::Dispatcher =
-///		charlie_buffalo::new_dispatcher(Box::new(|log: charlie_buffalo::Log| {
-///			println!("{}", log);
-///		}));
+///	    charlie_buffalo::new_dispatcher(Box::new(|log: charlie_buffalo::Log| {
+///	        println!("{}", log);
+///	    }));
 /// ```
 ///
 /// Or you can create it manually :
 ///
 /// ```rust
 /// let dispatcher: charlie_buffalo::Dispatcher =
-///		std::sync::Arc::new(std::sync::Mutex::new(|log: charlie_buffalo::Log| {
-///			println!("{}", log);
-///		}));
+///	    std::sync::Arc::new(std::sync::Mutex::new(|log: charlie_buffalo::Log| {
+///	        println!("{}", log);
+///	    }));
 /// ```
 ///
 /// # Example
@@ -60,18 +60,18 @@ pub type Dispatcher = Arc<Mutex<dyn Fn(crate::Log) + Send + 'static>>;
 ///
 /// ```rust
 /// let dropper: charlie_buffalo::Dropper =
-///		charlie_buffalo::new_dropper(Box::new(|_logger: &charlie_buffalo::Logger| {
-///			println!("The logger is now freed from memory");
-///		}));
+///	    charlie_buffalo::new_dropper(Box::new(|_logger: &charlie_buffalo::Logger| {
+///	        println!("The logger is now freed from memory");
+///	    }));
 /// ```
 ///
 /// Or you can create it manually :
 ///
 /// ```rust
 /// let dropper: charlie_buffalo::Dropper =
-///		Some(std::sync::Arc::new(std::sync::Mutex::new(|_logger: &charlie_buffalo::Logger| {
-///			println!("The logger is now freed from memory");
-///		})));
+///	    Some(std::sync::Arc::new(std::sync::Mutex::new(|_logger: &charlie_buffalo::Logger| {
+///	        println!("The logger is now freed from memory");
+///	    })));
 /// ```
 ///
 /// # Example

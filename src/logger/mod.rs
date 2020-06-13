@@ -32,18 +32,28 @@ impl Logger {
 	}
 
 	pub fn push(&self, attributes: Vec<(String, String)>, content: Option<&str>) {
-		(self.dispatcher.lock().unwrap())(crate::Log::from((attributes, content)));
+		let log = crate::Log::from((attributes, content));
+		match self.dispatcher.lock() {
+			Ok(dispatcher) => dispatcher(log),
+			_ => println!("{}", log),
+		}
 	}
 
 	pub fn receive(&self, log: crate::Log) {
-		(self.dispatcher.lock().unwrap())(log);
+		match self.dispatcher.lock() {
+			Ok(dispatcher) => dispatcher(log),
+			_ => println!("{}", log),
+		}
 	}
 }
 
 impl Drop for Logger {
 	fn drop(&mut self) {
 		if let Some(dropper) = &self.dropper {
-			(dropper.lock().unwrap())(self);
+			match dropper.lock() {
+				Ok(dropper) => dropper(self),
+				_ => eprintln!("ERROR from charlie_buffalo : can not call dropper"),
+			}
 		}
 	}
 }
