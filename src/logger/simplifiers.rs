@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 /// A simplifier to create a [`Dispatcher`](type.Dispatcher.html) without
 /// concurrent boilerplate.
-pub fn new_dispatcher(function: Box<dyn Fn(crate::Log) + Send>) -> super::Dispatcher {
+pub fn new_dispatcher(function: Box<dyn FnMut(crate::Log) + Send>) -> super::Dispatcher {
 	return Arc::new(Mutex::new(function));
 }
 

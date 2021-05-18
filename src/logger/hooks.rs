@@ -39,7 +39,7 @@ use std::sync::{Arc, Mutex};
 /// # See also
 ///
 /// [`new_dispatcher`](fn.new_dispatcher.html)
-pub type Dispatcher = Arc<Mutex<dyn Fn(crate::Log) + Send + 'static>>;
+pub type Dispatcher = Arc<Mutex<dyn FnMut(crate::Log) + Send + 'static>>;
 
 /// A function (or closure) called when logger is freed from memory.
 ///

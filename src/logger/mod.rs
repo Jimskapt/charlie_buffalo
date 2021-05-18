@@ -34,14 +34,14 @@ impl Logger {
 	pub fn push(&self, attributes: Vec<(String, String)>, content: Option<&str>) {
 		let log = crate::Log::from((attributes, content));
 		match self.dispatcher.lock() {
-			Ok(dispatcher) => dispatcher(log),
+			Ok(mut dispatcher) => dispatcher(log),
 			_ => println!("{}", log),
 		}
 	}
 
 	pub fn receive(&self, log: crate::Log) {
 		match self.dispatcher.lock() {
-			Ok(dispatcher) => dispatcher(log),
+			Ok(mut dispatcher) => dispatcher(log),
 			_ => println!("{}", log),
 		}
 	}

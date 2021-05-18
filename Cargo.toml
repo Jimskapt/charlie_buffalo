@@ -1,6 +1,6 @@
 [package]
 name = "charlie_buffalo"
-version = "1.0.1"
+version = "1.0.2"
 authors = ["Jimskapt <rami.programmer@gmail.com>"]
 description = "A library to join attributes on system logs."
 edition = "2018"
